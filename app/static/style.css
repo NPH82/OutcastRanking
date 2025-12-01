@@ -24,27 +24,27 @@
 }
 
 [data-theme="dark"] {
-    /* Dark mode colors - Navy/Blue Patriots Jersey Theme - ADA Compliant */
-    --bg-primary: linear-gradient(135deg, #0C2340 0%, #1B365D 100%);
-    --bg-secondary: #1B365D;
-    --bg-card: #0C2340;
-    --text-primary: #ffffff;
-    --text-secondary: #E6E6FA;  /* Lighter for better contrast */
-    --text-muted: #D3D3D3;  /* Lighter muted text */
+    /* Dark mode colors - Navy/Blue Patriots Jersey Theme - WCAG AA Compliant */
+    --bg-primary: linear-gradient(135deg, #0a1929 0%, #1a2332 100%);
+    --bg-secondary: #1e2936;  /* Lighter for better row contrast */
+    --bg-card: #0f1419;  /* Darker base for better contrast */
+    --text-primary: #ffffff;  /* Pure white for maximum contrast */
+    --text-secondary: #e3e8ef;  /* High contrast light text */
+    --text-muted: #b8c5d6;  /* Brighter muted text for readability */
     --text-white: #ffffff;
-    --border-color: #2C4F76;  /* Lighter border for visibility */
-    --shadow: rgba(0,0,0,0.3);
-    --shadow-hover: rgba(0,0,0,0.4);
-    --primary-color: #FF4757;  /* Brighter red for dark mode */
+    --border-color: #3d5a80;  /* Much lighter border for clear separation */
+    --shadow: rgba(0,0,0,0.5);
+    --shadow-hover: rgba(0,0,0,0.6);
+    --primary-color: #ff5370;  /* High contrast red */
     --secondary-color: #ffffff;
-    --success-color: #2ECC71;  /* Brighter green */
-    --danger-color: #FF4757;
-    --warning-color: #F39C12;  /* Brighter yellow */
-    --info-color: #E6E6FA;
-    --accent-red: #FF4757;  /* Brighter red */
-    --navy-blue: #0C2340;
-    --silver-grey: #E6E6FA;  /* Much lighter silver */
-    --patriots-silver: #D3D3D3;
+    --success-color: #4ade80;  /* Brighter green for dark backgrounds */
+    --danger-color: #ff5370;
+    --warning-color: #fbbf24;  /* High contrast yellow */
+    --info-color: #e3e8ef;
+    --accent-red: #ff5370;  /* High contrast red */
+    --navy-blue: #0f1419;
+    --silver-grey: #e3e8ef;  /* Very light silver */
+    --patriots-silver: #cbd5e1;
 }
 
 * {
@@ -349,6 +349,11 @@ h2 {
 
 .results-table tbody tr {
     transition: background-color 0.2s;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.results-table tbody tr:nth-child(odd) {
+    background-color: var(--bg-card);
 }
 
 .results-table tbody tr:nth-child(even) {
@@ -357,8 +362,9 @@ h2 {
 
 .results-table tbody tr:hover {
     background-color: var(--bg-secondary);
-    filter: brightness(1.05);
+    filter: brightness(1.15);
     outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
 }
 
 .results-table tbody tr.top-10 {
@@ -384,6 +390,11 @@ h2 {
     width: 60px;
 }
 
+[data-theme="dark"] .results-table .rank {
+    color: var(--primary-color);
+    font-weight: 800;
+}
+
 .results-table .manager {
     font-weight: 600;
     min-width: 150px;
@@ -395,9 +406,17 @@ h2 {
     font-weight: 600;
 }
 
+[data-theme="dark"] .results-table .wins {
+    color: #4ade80;  /* Brighter green for dark mode */
+}
+
 .results-table .losses {
     color: #dc3545;
     font-weight: 600;
+}
+
+[data-theme="dark"] .results-table .losses {
+    color: #ff5370;  /* Brighter red for dark mode */
 }
 
 .results-table .win-pct {

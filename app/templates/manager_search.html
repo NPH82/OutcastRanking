@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if manager_data %}{{ manager_data.display_name }} - {% endif %}OutcastRanking Manager Search</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="{{ url_for('static', filename='dark-mode.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2.0">
+    <script src="{{ url_for('static', filename='dark-mode.js') }}?v=2.0"></script>
     <style>
         .manager-search-form {
             background: var(--bg-card);
@@ -357,6 +357,12 @@
             text-align: center;
         }
         
+        [data-theme="dark"] .table-header {
+            background: var(--primary-color);
+            color: #ffffff;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
         .leagues-table {
             display: flex;
             background: white;
@@ -365,10 +371,19 @@
             overflow: hidden;
         }
         
+        [data-theme="dark"] .leagues-table {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        
         .league-column {
             flex: 1;
             padding: 15px;
             border-right: 1px solid #eee;
+        }
+        
+        [data-theme="dark"] .league-column {
+            border-right: 1px solid var(--border-color);
         }
         
         .league-column:last-child {
@@ -385,11 +400,24 @@
             background: #f9f9f9;
         }
         
+        [data-theme="dark"] .league-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
         .league-item:hover {
             background: #e3f2fd;
             border-color: #2c5aa0;
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        [data-theme="dark"] .league-item:hover {
+            background: var(--bg-card);
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            filter: brightness(1.2);
         }
         
         .league-name {
@@ -399,16 +427,28 @@
             font-size: 14px;
         }
         
+        [data-theme="dark"] .league-name {
+            color: var(--primary-color);
+        }
+        
         .league-record {
             font-size: 13px;
             color: #666;
             margin-bottom: 2px;
         }
         
+        [data-theme="dark"] .league-record {
+            color: var(--text-secondary);
+        }
+        
         .league-team {
             font-size: 12px;
             color: #888;
             font-style: italic;
+        }
+        
+        [data-theme="dark"] .league-team {
+            color: var(--text-muted);
         }
         
         .win-percentage {
@@ -423,9 +463,19 @@
             background-color: #28a745; /* Green for 70%+ */
         }
         
+        [data-theme="dark"] .win-percentage.excellent {
+            color: #000000;
+            background-color: #4ade80; /* Brighter green for dark mode */
+        }
+        
         .win-percentage.good {
             color: #000000;
             background-color: #ffc107; /* Yellow for 50-69.9% */
+        }
+        
+        [data-theme="dark"] .win-percentage.good {
+            color: #000000;
+            background-color: #fbbf24; /* Brighter yellow for dark mode */
         }
         
         .win-percentage.poor {
@@ -433,8 +483,17 @@
             background-color: #dc3545; /* Red for below 50% */
         }
         
+        [data-theme="dark"] .win-percentage.poor {
+            color: #ffffff;
+            background-color: #ff5370; /* Brighter red for dark mode */
+        }
+        
         .no-games {
             color: #dc3545;
+        }
+        
+        [data-theme="dark"] .no-games {
+            color: #ff5370;
         }
         
         @media (max-width: 768px) {
@@ -987,8 +1046,6 @@
             console.log('No manager data or rivalry not pending');
             {% endif %}
         });
-        
-        // Dark mode functionality loaded from shared script
     </script>
 </body>
 </html>

@@ -21,14 +21,15 @@
             font-weight: 700;
             font-size: 2.2em;
             margin-bottom: 8px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
         
         .leaderboard-header p {
-            color: #e6e6fa !important;
+            color: #ffffff !important;
             font-size: 1.1em;
-            font-weight: 400;
-            opacity: 0.95;
+            font-weight: 500;
+            opacity: 1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
         }
         
         .leaderboard-header .btn-light {
@@ -49,15 +50,18 @@
         
         /* Dark mode adjustments */
         [data-theme="dark"] .leaderboard-header {
-            background: linear-gradient(135deg, #0C2340 0%, #1B365D 100%);
+            background: linear-gradient(135deg, #0a1929 0%, #1a2f4a 100%);
         }
         
         [data-theme="dark"] .leaderboard-header h1 {
             color: #ffffff !important;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
         }
         
         [data-theme="dark"] .leaderboard-header p {
-            color: #E6E6FA !important;
+            color: #ffffff !important;
+            opacity: 0.95;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
         }
         
         .source-league-info {
@@ -170,33 +174,42 @@
             box-shadow: 0 2px 8px var(--shadow-hover);
         }
         
-        /* Dark mode table adjustments */
+        /* Dark mode table adjustments - WCAG AA Compliant */
         [data-theme="dark"] .results-table th {
-            background: linear-gradient(135deg, #0C2340 0%, #1B365D 100%);
+            background: var(--primary-color);
             color: #ffffff;
         }
         
         [data-theme="dark"] .results-table td {
             background: var(--bg-card);
-            color: #ffffff !important;
+            color: var(--text-primary);
             border-bottom-color: var(--border-color);
         }
         
+        [data-theme="dark"] .results-table tbody tr:nth-child(even) td {
+            background: var(--bg-secondary);
+        }
+        
         [data-theme="dark"] .results-table tbody tr:hover {
+            background-color: var(--bg-secondary) !important;
+            filter: brightness(1.15);
+        }
+        
+        [data-theme="dark"] .results-table tbody tr:hover td {
             background-color: var(--bg-secondary) !important;
         }
         
         /* Dark mode text elements */
         [data-theme="dark"] .rank {
-            color: #FF4757 !important; /* Bright red for visibility */
+            color: var(--primary-color); /* High contrast red */
         }
         
         [data-theme="dark"] .manager strong {
-            color: #ffffff !important; /* White for manager names */
+            color: var(--text-primary); /* Pure white for manager names */
         }
         
         [data-theme="dark"] .manager small {
-            color: #E6E6FA !important; /* Light purple for usernames */
+            color: var(--text-secondary); /* High contrast light text */
         }
         
         [data-theme="dark"] .wins {
@@ -986,9 +999,6 @@
                 tableContainer.setAttribute('aria-activedescendant', event.target.id || '');
             }
         });
-    </script>
-        
-        // Dark mode functionality loaded from shared script
     </script>
 </body>
 </html>

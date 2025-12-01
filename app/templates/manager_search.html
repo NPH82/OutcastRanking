@@ -230,7 +230,7 @@
         .stat-value {
             font-size: 24px;
             font-weight: bold;
-            color: var(--primary-color);
+            color: #2c5aa0;
             margin-bottom: 5px;
             line-height: 1.2;
         }
@@ -238,9 +238,28 @@
         .stat-label {
             font-size: 14px;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #333333;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+        
+        /* Dark Mode Overrides for Summary Stats */
+        [data-theme="dark"] .summary-stats {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .stat-item {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .stat-value {
+            color: var(--primary-color);
+        }
+        
+        [data-theme="dark"] .stat-label {
+            color: var(--text-primary);
         }
         
         /* Rival Analysis Styling - Inside Manager Summary */

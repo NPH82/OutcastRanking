@@ -1,14 +1,15 @@
 from app import create_app
-from flask import request
+import os
 
 app = create_app()
 
-@app.before_request
-def log_all_requests():
-    print(f"[APP LEVEL] Request: {request.method} {request.path}")
-    print(f"[APP LEVEL] Args: {dict(request.args)}")
-    print(f"[APP LEVEL] Form: {dict(request.form)}")
-
 if __name__ == "__main__":
-    print("Starting Flask app...")
-    app.run(debug=True, port=5001)  # Use different port
+    # Get configuration from environment variables
+    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+    port = int(os.environ.get('PORT', 5001))
+    
+    print(f"Starting Flask app on port {port}...")
+    if debug_mode:
+        print("⚠️  WARNING: Debug mode is enabled. Do not use in production!")
+    
+    app.run(debug=debug_mode, port=port, host='127.0.0.1')

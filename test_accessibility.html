@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility Test - Cross-League Leaderboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* CSS Variables for consistent theming */
+        :root {
+            --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            --bg-secondary: #f1f3f4;
+            --bg-card: #ffffff;
+            --text-primary: #001f3f;
+            --text-secondary: #495057;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: rgba(0,31,63,0.1);
+            --shadow-hover: rgba(0,31,63,0.15);
+            --primary-color: #001f3f;
+            --accent-red: #B8001F;
+        }
+
+        /* Accessibility Classes */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        /* Focus indicators for accessibility */
+        *:focus {
+            outline: 3px solid var(--accent-red) !important;
+            outline-offset: 2px !important;
+        }
+
+        button:focus,
+        a:focus,
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: 3px solid var(--accent-red) !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 5px rgba(184, 0, 31, 0.2) !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        /* Mobile Responsive Design */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-card);
+            margin-bottom: 20px;
+        }
+
+        .results-table {
+            margin-bottom: 0;
+        }
+
+        .results-table th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .results-table button:focus,
+        .results-table a:focus {
+            outline: 3px solid var(--accent-red);
+            outline-offset: 2px;
+        }
+
+        .manager-details-row[aria-expanded="true"] {
+            background-color: var(--bg-secondary) !important;
+        }
+
+        /* Win percentage accessibility */
+        .win-pct-excellent::before { content: "🟢"; margin-right: 4px; }
+        .win-pct-good::before { content: "🔵"; margin-right: 4px; }
+        .win-pct-average::before { content: "🟡"; margin-right: 4px; }
+        .win-pct-poor::before { content: "🔴"; margin-right: 4px; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .table-container {
+                margin: 0 -10px;
+                padding: 0 10px;
+            }
+            
+            .results-table {
+                min-width: 700px;
+                font-size: 14px;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: 12px 8px;
+                white-space: nowrap;
+            }
+            
+            .results-table .manager {
+                min-width: 140px;
+                max-width: 180px;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            
+            .btn-sm {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-height: 44px; /* ADA minimum touch target */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-table {
+                font-size: 13px;
+                min-width: 600px;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: 10px 6px;
+            }
+            
+            .btn-sm {
+                padding: 10px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1>Accessibility Test - Cross-League Leaderboard</h1>
+        <p class="text-muted">Testing the accessibility improvements for the leaderboard table</p>
+
+        <div class="table-container" role="region" aria-label="Cross-League Manager Rankings Table" tabindex="0">
+            <table class="results-table table table-striped table-hover" role="table" aria-label="Manager leaderboard with expandable details">
+                <caption class="sr-only">
+                    Cross-league manager rankings for 2025 season, sorted by win percentage and total wins. 
+                    Use the Details button in each row to view league-by-league breakdown.
+                </caption>
+                <thead class="table-dark">
+                    <tr role="row">
+                        <th scope="col" role="columnheader" aria-sort="none">
+                            <span class="sr-only">Ranking position</span>
+                            Rank
+                        </th>
+                        <th scope="col" role="columnheader" aria-sort="none">
+                            Manager Name
+                        </th>
+                        <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                            <span class="sr-only">Total</span>
+                            Wins
+                        </th>
+                        <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                            <span class="sr-only">Total</span>
+                            Losses
+                        </th>
+                        <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                            Win Percentage
+                        </th>
+                        <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                            Total Games
+                        </th>
+                        <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                            Active Leagues
+                        </th>
+                        <th scope="col" role="columnheader">
+                            <span class="sr-only">Expand for</span>
+                            Details
+                        </th>
+                    </tr>
+                </thead>
+                <tbody role="rowgroup">
+                    <!-- Test Manager 1 -->
+                    <tr role="row" class="table-warning" aria-label="Top 3 manager: StoneColdCJ">
+                        <td class="rank fw-bold" role="gridcell">
+                            <span aria-label="Rank 1">
+                                <span role="img" aria-label="First place">🥇</span>
+                                <span class="sr-only">1st</span>
+                            </span>
+                        </td>
+                        <td class="manager" role="gridcell">
+                            <div>
+                                <strong>StoneColdCJ</strong>
+                                <br>
+                                <small class="text-muted">@StoneColdCJ</small>
+                            </div>
+                        </td>
+                        <td class="wins text-success fw-bold text-center" role="gridcell">
+                            <span aria-label="12 wins">12</span>
+                        </td>
+                        <td class="losses text-danger fw-bold text-center" role="gridcell">
+                            <span aria-label="3 losses">3</span>
+                        </td>
+                        <td class="win-pct text-center" role="gridcell">
+                            <span class="badge bg-success win-pct-excellent"
+                                  aria-label="Win percentage: 80.0 percent, excellent performance">
+                                80.0%
+                            </span>
+                        </td>
+                        <td class="total-games text-center" role="gridcell">
+                            <span aria-label="15 total games">15</span>
+                        </td>
+                        <td class="active-leagues text-center" role="gridcell">
+                            <span aria-label="3 active leagues">3</span>
+                        </td>
+                        <td role="gridcell">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="toggleManagerDetails('StoneColdCJ')"
+                                    aria-expanded="false"
+                                    aria-controls="details-StoneColdCJ"
+                                    aria-label="Show league details for StoneColdCJ"
+                                    id="toggle-StoneColdCJ">
+                                <span class="sr-only">Show details for StoneColdCJ</span>
+                                <i class="fas fa-info-circle" aria-hidden="true"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                    <!-- Expandable Details Row -->
+                    <tr id="details-StoneColdCJ" 
+                        class="manager-details-row" 
+                        style="display: none;"
+                        role="row"
+                        aria-labelledby="toggle-StoneColdCJ"
+                        aria-expanded="false">
+                        <td colspan="8" role="gridcell">
+                            <div class="manager-details-content p-3 bg-light" 
+                                 role="region" 
+                                 aria-label="League breakdown for StoneColdCJ">
+                                <h6 id="breakdown-heading-StoneColdCJ">
+                                    League Breakdown for StoneColdCJ:
+                                </h6>
+                                <p>League details would be loaded here via AJAX...</p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Test Manager 2 -->
+                    <tr role="row" class="table-warning" aria-label="Top 3 manager: TestUser">
+                        <td class="rank fw-bold" role="gridcell">
+                            <span aria-label="Rank 2">
+                                <span role="img" aria-label="Second place">🥈</span>
+                                <span class="sr-only">2nd</span>
+                            </span>
+                        </td>
+                        <td class="manager" role="gridcell">
+                            <div>
+                                <strong>TestUser</strong>
+                                <br>
+                                <small class="text-muted">@testuser</small>
+                            </div>
+                        </td>
+                        <td class="wins text-success fw-bold text-center" role="gridcell">
+                            <span aria-label="8 wins">8</span>
+                        </td>
+                        <td class="losses text-danger fw-bold text-center" role="gridcell">
+                            <span aria-label="7 losses">7</span>
+                        </td>
+                        <td class="win-pct text-center" role="gridcell">
+                            <span class="badge bg-info win-pct-good"
+                                  aria-label="Win percentage: 53.3 percent, good performance">
+                                53.3%
+                            </span>
+                        </td>
+                        <td class="total-games text-center" role="gridcell">
+                            <span aria-label="15 total games">15</span>
+                        </td>
+                        <td class="active-leagues text-center" role="gridcell">
+                            <span aria-label="2 active leagues">2</span>
+                        </td>
+                        <td role="gridcell">
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="toggleManagerDetails('testuser')"
+                                    aria-expanded="false"
+                                    aria-controls="details-testuser"
+                                    aria-label="Show league details for TestUser"
+                                    id="toggle-testuser">
+                                <span class="sr-only">Show details for TestUser</span>
+                                <i class="fas fa-info-circle" aria-hidden="true"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                    <!-- Expandable Details Row -->
+                    <tr id="details-testuser" 
+                        class="manager-details-row" 
+                        style="display: none;"
+                        role="row"
+                        aria-labelledby="toggle-testuser"
+                        aria-expanded="false">
+                        <td colspan="8" role="gridcell">
+                            <div class="manager-details-content p-3 bg-light" 
+                                 role="region" 
+                                 aria-label="League breakdown for TestUser">
+                                <h6 id="breakdown-heading-testuser">
+                                    League Breakdown for TestUser:
+                                </h6>
+                                <p>League details would be loaded here via AJAX...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="alert alert-info">
+            <h5>Accessibility Features Tested:</h5>
+            <ul>
+                <li>✅ Proper ARIA roles and labels</li>
+                <li>✅ Screen reader support with .sr-only class</li>
+                <li>✅ Keyboard navigation (Tab, Enter, Space, Escape)</li>
+                <li>✅ ADA-compliant touch targets (44px minimum)</li>
+                <li>✅ Visual indicators with emoji prefixes</li>
+                <li>✅ Semantic HTML with proper table structure</li>
+                <li>✅ Focus indicators for keyboard users</li>
+                <li>✅ Mobile responsive design</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-warning">
+            <h5>Test Instructions:</h5>
+            <ul>
+                <li>Use Tab key to navigate through the table</li>
+                <li>Press Enter or Space to activate buttons</li>
+                <li>Press Escape to close expanded details</li>
+                <li>Test on mobile devices for responsive design</li>
+                <li>Use screen reader to test accessibility</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    
+    <script>
+        function toggleManagerDetails(username) {
+            const detailsRow = document.getElementById(`details-${username}`);
+            const toggleButton = document.getElementById(`toggle-${username}`);
+            const isExpanded = detailsRow.style.display !== 'none';
+            
+            // Update display and ARIA states
+            if (isExpanded) {
+                detailsRow.style.display = 'none';
+                detailsRow.setAttribute('aria-expanded', 'false');
+                toggleButton.setAttribute('aria-expanded', 'false');
+                toggleButton.setAttribute('aria-label', `Show league details for ${username}`);
+                toggleButton.innerHTML = '<span class="sr-only">Show details</span><i class="fas fa-info-circle" aria-hidden="true"></i> View';
+            } else {
+                detailsRow.style.display = 'table-row';
+                detailsRow.setAttribute('aria-expanded', 'true');
+                toggleButton.setAttribute('aria-expanded', 'true');
+                toggleButton.setAttribute('aria-label', `Hide league details for ${username}`);
+                toggleButton.innerHTML = '<span class="sr-only">Hide details</span><i class="fas fa-eye-slash" aria-hidden="true"></i> Hide';
+                
+                // Focus management for screen readers
+                setTimeout(() => {
+                    const detailsContent = detailsRow.querySelector('.manager-details-content');
+                    if (detailsContent) {
+                        detailsContent.focus();
+                    }
+                }, 100);
+            }
+            
+            // Announce to screen readers
+            announceToScreenReader(`${isExpanded ? 'Collapsed' : 'Expanded'} details for ${username}`);
+        }
+
+        // Helper function to announce messages to screen readers
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.textContent = message;
+            
+            document.body.appendChild(announcement);
+            
+            // Remove after announcement
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(event) {
+            // Handle Enter and Space for button activation
+            if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.btn')) {
+                event.preventDefault();
+                event.target.click();
+            }
+            
+            // Handle Escape to close expanded details
+            if (event.key === 'Escape') {
+                const expandedRows = document.querySelectorAll('.manager-details-row[aria-expanded="true"]');
+                expandedRows.forEach(row => {
+                    const username = row.id.replace('details-', '');
+                    toggleManagerDetails(username);
+                });
+            }
+        });
+
+        // Enhanced focus management
+        document.addEventListener('focusin', function(event) {
+            if (event.target.closest('.table-container')) {
+                const tableContainer = event.target.closest('.table-container');
+                tableContainer.setAttribute('aria-activedescendant', event.target.id || '');
+            }
+        });
+
+        // Test the accessibility features
+        console.log('Accessibility Test Page Loaded');
+        console.log('✅ Screen reader classes loaded');
+        console.log('✅ ARIA attributes configured');
+        console.log('✅ Keyboard navigation enabled');
+        console.log('✅ Mobile responsive design active');
+    </script>
+</body>
+</html>

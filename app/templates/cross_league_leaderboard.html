@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-League Leaderboard - OutcastRanking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='dark-mode.js') }}"></script>
+    <style>
+        .leaderboard-header {
+            background: linear-gradient(135deg, var(--navy-blue) 0%, #2c5aa0 100%);
+            color: #ffffff;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .leaderboard-header h1 {
+            color: #ffffff !important;
+            font-weight: 700;
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .leaderboard-header p {
+            color: #e6e6fa !important;
+            font-size: 1.1em;
+            font-weight: 400;
+            opacity: 0.95;
+        }
+        
+        .leaderboard-header .btn-light {
+            background: #ffffff;
+            border: 2px solid #ffffff;
+            color: var(--navy-blue);
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .leaderboard-header .btn-light:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        /* Dark mode adjustments */
+        [data-theme="dark"] .leaderboard-header {
+            background: linear-gradient(135deg, #0C2340 0%, #1B365D 100%);
+        }
+        
+        [data-theme="dark"] .leaderboard-header h1 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .leaderboard-header p {
+            color: #E6E6FA !important;
+        }
+        
+        .source-league-info {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        .source-league-info h4 {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .source-league-info p {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .source-league-info strong {
+            color: var(--primary-color);
+        }
+        
+        /* Dark mode adjustments */
+        [data-theme="dark"] .source-league-info {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .source-league-info h4 {
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .source-league-info p {
+            color: #E6E6FA;
+        }
+        
+        [data-theme="dark"] .source-league-info strong {
+            color: var(--accent-red);
+        }
+        
+        .results-section {
+            margin-bottom: 30px;
+        }
+        
+        .results-header h2 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 1.8em;
+        }
+        
+        .results-header p {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        
+        /* Dark mode text improvements */
+        [data-theme="dark"] .results-header h2 {
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .results-header p {
+            color: #E6E6FA;
+        }
+        
+        .table-container {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px var(--shadow);
+            overflow: hidden;
+        }
+        
+        .results-table {
+            margin-bottom: 0;
+            background: var(--bg-card);
+        }
+        
+        .results-table th {
+            background: linear-gradient(135deg, #2c5aa0 0%, var(--navy-blue) 100%);
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            padding: 15px 10px;
+            text-align: center;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .results-table td {
+            padding: 12px 10px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: #001f3f; /* Dark navy for light mode text */
+            font-weight: 500;
+        }
+        
+        .results-table tbody tr:hover {
+            background-color: var(--bg-secondary) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-hover);
+        }
+        
+        /* Dark mode table adjustments */
+        [data-theme="dark"] .results-table th {
+            background: linear-gradient(135deg, #0C2340 0%, #1B365D 100%);
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .results-table td {
+            background: var(--bg-card);
+            color: #ffffff !important;
+            border-bottom-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .results-table tbody tr:hover {
+            background-color: var(--bg-secondary) !important;
+        }
+        
+        /* Dark mode text elements */
+        [data-theme="dark"] .rank {
+            color: #FF4757 !important; /* Bright red for visibility */
+        }
+        
+        [data-theme="dark"] .manager strong {
+            color: #ffffff !important; /* White for manager names */
+        }
+        
+        [data-theme="dark"] .manager small {
+            color: #E6E6FA !important; /* Light purple for usernames */
+        }
+        
+        [data-theme="dark"] .wins {
+            color: #2ECC71 !important; /* Bright green for wins */
+        }
+        
+        [data-theme="dark"] .losses {
+            color: #FF4757 !important; /* Bright red for losses */
+        }
+        
+        [data-theme="dark"] .total-games,
+        [data-theme="dark"] .active-leagues {
+            color: #E6E6FA !important; /* Light text for numbers */
+        }
+        
+        .rank {
+            font-size: 18px;
+            font-weight: bold;
+            color: #001f3f; /* Darker navy for better contrast */
+            text-align: center;
+            width: 80px;
+        }
+        
+        .manager {
+            min-width: 150px;
+        }
+        
+        .manager strong {
+            color: #001f3f; /* Darker navy for manager names */
+            font-size: 16px;
+            font-weight: 700;
+        }
+        
+        .manager small {
+            color: #495057; /* Darker gray for usernames */
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .wins, .losses {
+            font-weight: bold;
+            text-align: center;
+            width: 80px;
+        }
+        
+        .wins {
+            color: #155724; /* Darker green for better contrast */
+            font-weight: 700;
+        }
+        
+        .losses {
+            color: #721c24; /* Darker red for better contrast */
+            font-weight: 700;
+        }
+        
+        .win-pct {
+            text-align: center;
+            width: 100px;
+        }
+        
+        /* Light mode badge styling for better contrast */
+        .badge.bg-success {
+            background-color: #155724 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge.bg-info {
+            background-color: #0c5460 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge.bg-warning {
+            background-color: #856404 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        .badge.bg-danger {
+            background-color: #721c24 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        /* Light mode button styling */
+        .btn-outline-primary {
+            border-color: #001f3f !important;
+            color: #001f3f !important;
+            font-weight: 600;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #001f3f !important;
+            color: #ffffff !important;
+        }
+        
+        .total-games, .leagues, .active-leagues {
+            text-align: center;
+            width: 90px;
+            font-weight: 700;
+            color: #001f3f; /* Dark navy for light mode */
+        }
+        
+        .manager-details-row {
+            background-color: #f8f9fa !important;
+        }
+        
+        .manager-details-content {
+            border-radius: 8px;
+        }
+        
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 0 15px;
+            }
+            
+            .leaderboard-header {
+                padding: 20px 0;
+                text-align: center;
+            }
+            
+            .leaderboard-header h1 {
+                font-size: 1.8em;
+                margin-bottom: 10px;
+            }
+            
+            .leaderboard-header p {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+            
+            .leaderboard-header .col-md-4 {
+                text-align: center !important;
+                margin-top: 15px;
+            }
+            
+            .results-header h2 {
+                font-size: 1.5em;
+                text-align: center;
+            }
+            
+            .results-header p {
+                text-align: center;
+                font-size: 16px;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 0 -15px 20px -15px;
+                padding: 0 15px;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+            
+            .results-table {
+                min-width: 700px;
+                font-size: 14px;
+            }
+            
+            .results-table th {
+                padding: 12px 8px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+            
+            .results-table td {
+                padding: 12px 8px;
+                white-space: nowrap;
+            }
+            
+            .results-table .manager {
+                min-width: 140px;
+                max-width: 180px;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            
+            .results-table .rank {
+                width: 60px;
+                text-align: center;
+            }
+            
+            .btn-sm {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-height: 44px; /* ADA minimum touch target */
+            }
+            
+            .manager-details {
+                margin: 15px 0;
+                border-radius: 8px;
+            }
+            
+            .manager-details-content {
+                padding: 15px;
+                border-radius: 8px;
+            }
+            
+            .source-league-info {
+                margin: 15px 0;
+                padding: 15px;
+                border-radius: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .leaderboard-header h1 {
+                font-size: 1.5em;
+            }
+            
+            .leaderboard-header p {
+                font-size: 14px;
+            }
+            
+            .results-header h2 {
+                font-size: 1.3em;
+            }
+            
+            .results-table {
+                font-size: 13px;
+                min-width: 600px;
+            }
+            
+            .results-table th {
+                padding: 10px 6px;
+                font-size: 11px;
+            }
+            
+            .results-table td {
+                padding: 10px 6px;
+            }
+            
+            .btn-sm {
+                padding: 10px 8px;
+                font-size: 11px;
+                min-height: 44px; /* ADA minimum touch target */
+            }
+        }
+        
+        /* Accessibility Improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .results-table th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .results-table button:focus,
+        .results-table a:focus {
+            outline: 3px solid var(--accent-red);
+            outline-offset: 2px;
+        }
+        
+        .manager-details-row[aria-expanded="true"] {
+            background-color: var(--bg-secondary) !important;
+        }
+        
+        /* Win percentage accessibility */
+        .win-pct-label {
+            font-weight: bold;
+            margin-right: 4px;
+        }
+        
+        .win-pct-excellent::before { content: "🟢"; margin-right: 4px; }
+        .win-pct-good::before { content: "🔵"; margin-right: 4px; }
+        .win-pct-average::before { content: "🟡"; margin-right: 4px; }
+        .win-pct-poor::before { content: "🔴"; margin-right: 4px; }
+        
+        /* Enhanced table styling for better readability */
+        .results-table tbody tr:nth-child(even) {
+            background-color: var(--bg-secondary);
+        }
+        
+        .results-table tbody tr:hover {
+            background-color: var(--bg-card);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        /* Dark mode table row improvements */
+        [data-theme="dark"] .results-table tbody tr:nth-child(even) {
+            background-color: #1B365D !important;
+        }
+        
+        [data-theme="dark"] .results-table tbody tr:hover {
+            background-color: #2C4F76 !important;
+            box-shadow: 0 2px 8px rgba(255,255,255,0.1);
+        }
+        
+        /* Dark mode badge improvements */
+        [data-theme="dark"] .badge.bg-success {
+            background-color: #2ECC71 !important;
+            color: #000000 !important;
+            font-weight: 700;
+        }
+        
+        [data-theme="dark"] .badge.bg-info {
+            background-color: #3498DB !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        [data-theme="dark"] .badge.bg-warning {
+            background-color: #F39C12 !important;
+            color: #000000 !important;
+            font-weight: 700;
+        }
+        
+        [data-theme="dark"] .badge.bg-danger {
+            background-color: #FF4757 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        
+        /* Dark mode button improvements */
+        [data-theme="dark"] .btn-outline-primary {
+            border-color: #FF4757 !important;
+            color: #FF4757 !important;
+        }
+        
+        [data-theme="dark"] .btn-outline-primary:hover {
+            background-color: #FF4757 !important;
+            color: #ffffff !important;
+        }
+        
+        /* Dark mode top 3 highlighting */
+        [data-theme="dark"] .table-warning {
+            background-color: #F39C12 !important;
+            color: #000000 !important;
+        }
+        
+        [data-theme="dark"] .table-warning td {
+            color: #000000 !important;
+            background-color: #F39C12 !important;
+        }
+        
+        [data-theme="dark"] .table-warning .manager strong {
+            color: #000000 !important;
+        }
+        
+        [data-theme="dark"] .table-warning .manager small {
+            color: #1a1a1a !important;
+            font-weight: 600;
+        }
+        
+        [data-theme="dark"] .table-warning .rank {
+            color: #000000 !important;
+        }
+        
+        [data-theme="dark"] .table-warning .wins {
+            color: #006400 !important; /* Dark green for contrast on yellow */
+        }
+        
+        [data-theme="dark"] .table-warning .losses {
+            color: #8B0000 !important; /* Dark red for contrast on yellow */
+        }
+        
+        [data-theme="dark"] .table-warning .total-games,
+        [data-theme="dark"] .table-warning .active-leagues {
+            color: #000000 !important;
+            font-weight: 700;
+        }
+        
+        /* Dark mode manager details */
+        [data-theme="dark"] .manager-details-content {
+            background-color: var(--bg-secondary) !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .manager-details-content h6 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .manager-details-content .table {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .manager-details-content .table th {
+            color: #ffffff !important;
+            background-color: var(--bg-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+        
+        [data-theme="dark"] .manager-details-content .table td {
+            color: #ffffff !important;
+            background-color: var(--bg-card) !important;
+            border-color: var(--border-color) !important;
+        }
+        
+        /* Loading state */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Dark Mode Toggle -->
+    <div class="dark-mode-toggle">
+        <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark/light mode">
+        </button>
+    </div>
+    
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="leaderboard-header">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1>Cross-League Manager Rankings</h1>
+                        <p class="mb-0">Cumulative performance across all leagues in {{ season }} season</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ url_for('manager.manager_search') }}" class="btn btn-light">
+                            ← Back to Search
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Source League Information -->
+            {% if leaderboard_data.source_league %}
+            <div class="source-league-info">
+                <h4>{{ leaderboard_data.source_league.league_name }}</h4>
+                <p><strong>Source League:</strong> {{ leaderboard_data.source_league.league_id }}</p>
+                <p><strong>Season:</strong> {{ leaderboard_data.source_league.season }}</p>
+                <p><strong>Managers Found:</strong> {{ leaderboard_data.stats.total_managers_processed }} of {{ leaderboard_data.stats.total_managers_found }}</p>
+                <p class="mb-0"><em>Rankings are based on each manager's cumulative performance across ALL their leagues this season.</em></p>
+            </div>
+            {% endif %}
+
+            <!-- Cross-League Leaderboard -->
+            {% if leaderboard_data.leaderboard %}
+            <div class="results-section">
+                <div class="results-header mb-4">
+                    <h2>Cross-League Manager Leaderboard ({{ season }} Season)</h2>
+                    <p class="text-muted">Ranked by cumulative performance across all leagues</p>
+                </div>
+                
+                <div class="table-container" role="region" aria-label="Cross-League Manager Rankings Table" tabindex="0">
+                    <table class="results-table table table-striped table-hover" role="table" aria-label="Manager leaderboard with expandable details">
+                        <caption class="sr-only">
+                            Cross-league manager rankings for {{ season }} season, sorted by win percentage and total wins. 
+                            Use the Details button in each row to view league-by-league breakdown.
+                        </caption>
+                        <thead class="table-dark">
+                            <tr role="row">
+                                <th scope="col" role="columnheader" aria-sort="none">
+                                    <span class="sr-only">Ranking position</span>
+                                    Rank
+                                </th>
+                                <th scope="col" role="columnheader" aria-sort="none">
+                                    Manager Name
+                                </th>
+                                <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                                    <span class="sr-only">Total</span>
+                                    Wins
+                                </th>
+                                <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                                    <span class="sr-only">Total</span>
+                                    Losses
+                                </th>
+                                <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                                    Win Percentage
+                                </th>
+                                <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                                    Total Games
+                                </th>
+                                <th scope="col" role="columnheader" aria-sort="none" class="text-center">
+                                    Active Leagues
+                                </th>
+                                <th scope="col" role="columnheader">
+                                    <span class="sr-only">Expand for</span>
+                                    Details
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody role="rowgroup">
+                            {% for manager in leaderboard_data.leaderboard %}
+                            <tr role="row" class="{{ 'table-warning' if loop.index <= 3 else '' }}" 
+                                {% if loop.index <= 3 %}aria-label="Top 3 manager: {{ manager.display_name }}"{% endif %}>
+                                <td class="rank fw-bold" role="gridcell">
+                                    <span aria-label="Rank {{ manager.rank }}">
+                                        {% if manager.rank == 1 %}
+                                            <span role="img" aria-label="First place">🥇</span>
+                                            <span class="sr-only">1st</span>
+                                        {% elif manager.rank == 2 %}
+                                            <span role="img" aria-label="Second place">🥈</span>
+                                            <span class="sr-only">2nd</span>
+                                        {% elif manager.rank == 3 %}
+                                            <span role="img" aria-label="Third place">🥉</span>
+                                            <span class="sr-only">3rd</span>
+                                        {% else %}
+                                            {{ manager.rank }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td class="manager" role="gridcell">
+                                    <div>
+                                        <strong>{{ manager.display_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">@{{ manager.username }}</small>
+                                    </div>
+                                </td>
+                                <td class="wins text-success fw-bold text-center" role="gridcell">
+                                    <span aria-label="{{ manager.total_wins }} wins">{{ manager.total_wins }}</span>
+                                </td>
+                                <td class="losses text-danger fw-bold text-center" role="gridcell">
+                                    <span aria-label="{{ manager.total_losses }} losses">{{ manager.total_losses }}</span>
+                                </td>
+                                <td class="win-pct text-center" role="gridcell">
+                                    {% set win_pct = manager.win_percentage * 100 %}
+                                    <span class="badge 
+                                        {% if win_pct >= 70 %}bg-success win-pct-excellent{% elif win_pct >= 60 %}bg-info win-pct-good{% elif win_pct >= 50 %}bg-warning win-pct-average{% else %}bg-danger win-pct-poor{% endif %}"
+                                        aria-label="Win percentage: {{ '%.1f'|format(win_pct) }} percent, 
+                                        {% if win_pct >= 70 %}excellent performance{% elif win_pct >= 60 %}good performance{% elif win_pct >= 50 %}average performance{% else %}below average performance{% endif %}">
+                                        {{ "%.1f"|format(win_pct) }}%
+                                    </span>
+                                </td>
+                                <td class="total-games text-center" role="gridcell">
+                                    <span aria-label="{{ manager.total_games }} total games">{{ manager.total_games }}</span>
+                                </td>
+                                <td class="active-leagues text-center" role="gridcell">
+                                    <span aria-label="{{ manager.active_leagues }} active leagues">{{ manager.active_leagues }}</span>
+                                </td>
+                                <td role="gridcell">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="toggleManagerDetails('{{ manager.username }}')"
+                                            aria-expanded="false"
+                                            aria-controls="details-{{ manager.username }}"
+                                            aria-label="Show league details for {{ manager.display_name }}"
+                                            id="toggle-{{ manager.username }}">
+                                        <span class="sr-only">Show details for {{ manager.display_name }}</span>
+                                        <i class="fas fa-info-circle" aria-hidden="true"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- Expandable Details Row -->
+                            <tr id="details-{{ manager.username }}" 
+                                class="manager-details-row" 
+                                style="display: none;"
+                                role="row"
+                                aria-labelledby="toggle-{{ manager.username }}"
+                                aria-expanded="false">
+                                <td colspan="8" role="gridcell">
+                                    <div class="manager-details-content p-3 bg-light" 
+                                         role="region" 
+                                         aria-label="League breakdown for {{ manager.display_name }}">
+                                        <h6 id="breakdown-heading-{{ manager.username }}">
+                                            League Breakdown for {{ manager.display_name }}:
+                                        </h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm" 
+                                                   role="table"
+                                                   aria-labelledby="breakdown-heading-{{ manager.username }}">
+                                                <caption class="sr-only">
+                                                    Detailed league-by-league performance for {{ manager.display_name }}
+                                                </caption>
+                                                <thead>
+                                                    <tr role="row">
+                                                        <th scope="col" role="columnheader">League Name</th>
+                                                        <th scope="col" role="columnheader">Record</th>
+                                                        <th scope="col" role="columnheader">Win %</th>
+                                                        <th scope="col" role="columnheader">Games</th>
+                                                        <th scope="col" role="columnheader">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="leagues-tbody-{{ manager.username }}" role="rowgroup">
+                                                    <tr role="row">
+                                                        <td colspan="5" class="text-center" role="gridcell">
+                                                            <button class="btn btn-sm btn-outline-primary" 
+                                                                    onclick="loadManagerDetails('{{ manager.username }}', '{{ season }}')"
+                                                                    aria-label="Load detailed league breakdown for {{ manager.display_name }}">
+                                                                Load League Details
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+                <div class="alert alert-warning text-center">
+                    <h4>No Data Available</h4>
+                    <p>Could not load cross-league leaderboard data. Please try again.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    
+    <script>
+        function toggleManagerDetails(username) {
+            const detailsRow = document.getElementById(`details-${username}`);
+            const toggleButton = document.getElementById(`toggle-${username}`);
+            const isExpanded = detailsRow.style.display !== 'none';
+            
+            // Update display and ARIA states
+            if (isExpanded) {
+                detailsRow.style.display = 'none';
+                detailsRow.setAttribute('aria-expanded', 'false');
+                toggleButton.setAttribute('aria-expanded', 'false');
+                toggleButton.setAttribute('aria-label', `Show league details for ${username}`);
+                toggleButton.innerHTML = '<span class="sr-only">Show details</span><i class="fas fa-info-circle" aria-hidden="true"></i> View';
+            } else {
+                detailsRow.style.display = 'table-row';
+                detailsRow.setAttribute('aria-expanded', 'true');
+                toggleButton.setAttribute('aria-expanded', 'true');
+                toggleButton.setAttribute('aria-label', `Hide league details for ${username}`);
+                toggleButton.innerHTML = '<span class="sr-only">Hide details</span><i class="fas fa-eye-slash" aria-hidden="true"></i> Hide';
+                
+                // Focus management for screen readers
+                setTimeout(() => {
+                    const detailsContent = detailsRow.querySelector('.manager-details-content');
+                    if (detailsContent) {
+                        detailsContent.focus();
+                    }
+                }, 100);
+            }
+        }
+
+        function loadManagerDetails(username, season) {
+            const tbody = document.getElementById(`leagues-tbody-${username}`);
+            const loadButton = tbody.querySelector('button');
+            
+            // Show loading state with accessibility feedback
+            loadButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+            loadButton.setAttribute('aria-label', 'Loading league details...');
+            loadButton.disabled = true;
+            
+            fetch(`/api/manager/${username}/leagues?season=${season}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.leagues && data.leagues.length > 0) {
+                        // Success: populate the table with proper accessibility
+                        tbody.innerHTML = data.leagues.map(league => {
+                            const winPct = league.total_games > 0 ? ((league.wins / league.total_games) * 100) : 0;
+                            const badgeClass = winPct >= 70 ? 'bg-success' : 
+                                             winPct >= 60 ? 'bg-info' : 
+                                             winPct >= 50 ? 'bg-warning' : 'bg-danger';
+                            const performanceText = winPct >= 70 ? 'excellent' : 
+                                                  winPct >= 60 ? 'good' : 
+                                                  winPct >= 50 ? 'average' : 'below average';
+                            
+                            return `
+                                <tr role="row">
+                                    <td role="gridcell">
+                                        <strong>${league.league_name || 'Unknown League'}</strong>
+                                    </td>
+                                    <td role="gridcell">
+                                        <span aria-label="${league.wins} wins, ${league.losses} losses">
+                                            ${league.wins}-${league.losses}
+                                        </span>
+                                    </td>
+                                    <td role="gridcell">
+                                        <span class="badge ${badgeClass}" 
+                                              aria-label="Win percentage: ${winPct.toFixed(1)} percent, ${performanceText} performance">
+                                            ${winPct.toFixed(1)}%
+                                        </span>
+                                    </td>
+                                    <td role="gridcell">
+                                        <span aria-label="${league.total_games} total games">${league.total_games}</span>
+                                    </td>
+                                    <td role="gridcell">
+                                        <span class="badge ${league.status === 'active' ? 'bg-success' : 'bg-secondary'}"
+                                              aria-label="League status: ${league.status}">
+                                            ${league.status || 'Unknown'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                        
+                        // Announce success to screen readers
+                        announceToScreenReader(`League details loaded for ${username}. ${data.leagues.length} leagues found.`);
+                    } else {
+                        // No data found
+                        tbody.innerHTML = `
+                            <tr role="row">
+                                <td colspan="5" class="text-center text-muted" role="gridcell">
+                                    <em aria-label="No league data available">No league data available for ${season} season</em>
+                                </td>
+                            </tr>
+                        `;
+                        announceToScreenReader(`No league data found for ${username} in ${season} season.`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading manager details:', error);
+                    tbody.innerHTML = `
+                        <tr role="row">
+                            <td colspan="5" class="text-center text-danger" role="gridcell">
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                <span aria-label="Error loading data">Error loading league details. Please try again.</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" 
+                                        onclick="loadManagerDetails('${username}', '${season}')"
+                                        aria-label="Retry loading league details for ${username}">
+                                    <i class="fas fa-redo" aria-hidden="true"></i> Retry
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    announceToScreenReader(`Error loading league details for ${username}. Please try again.`);
+                });
+        }
+
+        // Helper function to announce messages to screen readers
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.textContent = message;
+            
+            document.body.appendChild(announcement);
+            
+            // Remove after announcement
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(event) {
+            // Handle Enter and Space for button activation
+            if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.btn')) {
+                event.preventDefault();
+                event.target.click();
+            }
+            
+            // Handle Escape to close expanded details
+            if (event.key === 'Escape') {
+                const expandedRows = document.querySelectorAll('.manager-details-row[aria-expanded="true"]');
+                expandedRows.forEach(row => {
+                    const username = row.id.replace('details-', '');
+                    toggleManagerDetails(username);
+                });
+            }
+        });
+
+        // Enhanced focus management
+        document.addEventListener('focusin', function(event) {
+            if (event.target.closest('.table-container')) {
+                const tableContainer = event.target.closest('.table-container');
+                tableContainer.setAttribute('aria-activedescendant', event.target.id || '');
+            }
+        });
+    </script>
+        
+        // Dark mode functionality loaded from shared script
+    </script>
+</body>
+</html>

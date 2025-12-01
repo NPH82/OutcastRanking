@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if manager_data %}{{ manager_data.display_name }} - {% endif %}OutcastRanking Manager Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='dark-mode.js') }}"></script>
+    <style>
+        .manager-search-form {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px var(--shadow);
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .search-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            background: var(--bg-card);
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+        
+        .search-tab {
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-bottom: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+            min-height: 48px;  /* ADA minimum touch target */
+            margin-right: 2px;
+        }
+        
+        .search-tab.active {
+            background: var(--bg-card);
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .search-tab:hover {
+            background: var(--bg-card);
+            color: var(--primary-color);
+        }
+        
+        .search-tab:focus {
+            outline: 3px solid var(--accent-red);
+            outline-offset: 2px;
+        }
+        
+        /* Mobile Specific Improvements */
+        @media (max-width: 768px) {
+            .manager-search-form {
+                padding: 15px;
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .search-tabs {
+                flex-direction: column;
+                border-radius: 8px;
+                margin-bottom: 15px;
+            }
+            
+            .search-tab {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 2px;
+                padding: 14px 20px;
+                border-radius: 6px;
+                text-align: center;
+            }
+            
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .stat-item {
+                padding: 12px;
+                min-height: 80px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+                margin-bottom: 4px;
+            }
+            
+            .stat-label {
+                font-size: 12px;
+            }
+            
+            .leagues-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .rival-analysis {
+                padding: 15px 0 0 0;
+                margin-top: 15px;
+                border-top: 1px solid var(--border-color);
+            }
+            
+            .rival-analysis h3 {
+                font-size: 1.1em;
+                margin-bottom: 15px;
+            }
+            
+            .rival-containers {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .rival-container {
+                padding: 15px;
+            }
+            
+            .rival-header h4 {
+                font-size: 1em;
+            }
+            
+            .rival-name {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .summary-stats {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .stat-item {
+                padding: 15px;
+                min-height: 70px;
+            }
+            
+            .stat-value {
+                font-size: 22px;
+            }
+            
+            .stat-label {
+                font-size: 13px;
+            }
+        }
+        
+        .search-content {
+            display: none;
+        }
+        
+        .search-content.active {
+            display: block;
+        }
+        
+        .multi-manager-info {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .multi-manager-info h6 {
+            margin: 0 0 8px 0;
+            color: var(--navy-blue);
+        }
+        
+        .multi-manager-info ul {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+        
+        .multi-manager-info li {
+            font-size: 14px;
+            color: var(--navy-blue);
+            margin-bottom: 4px;
+        }
+        
+        .manager-summary {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-hover);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Rival Analysis Styling - Inside Manager Summary */
+        .rival-analysis {
+            background: transparent;
+            padding: 20px 0 0 0;
+            border-radius: 0;
+            box-shadow: none;
+            margin-bottom: 0;
+            border: none;
+            border-top: 2px solid var(--border-color);
+            margin-top: 20px;
+        }
+        
+        .rival-analysis h3 {
+            text-align: center;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .rival-containers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .rival-container {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .rival-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px var(--shadow-hover);
+        }
+        
+        .favorite-opponent {
+            border-left: 4px solid #28a745;
+        }
+        
+        .biggest-rival {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .rival-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .rival-icon {
+            font-size: 24px;
+        }
+        
+        .rival-header h4 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1em;
+        }
+        
+        .rival-content {
+            text-align: center;
+        }
+        
+        .rival-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .rival-record {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .rival-record .wins {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .rival-record .losses {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .rival-percentage {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .no-data {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 14px;
+        }
+        
+        .leagues-container {
+            margin-bottom: 40px;
+        }
+        
+        .table-header {
+            background: #2c5aa0;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .leagues-table {
+            display: flex;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        
+        .league-column {
+            flex: 1;
+            padding: 15px;
+            border-right: 1px solid #eee;
+        }
+        
+        .league-column:last-child {
+            border-right: none;
+        }
+        
+        .league-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f9f9f9;
+        }
+        
+        .league-item:hover {
+            background: #e3f2fd;
+            border-color: #2c5aa0;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .league-name {
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
+        .league-record {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        
+        .league-team {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+        }
+        
+        .win-percentage {
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .win-percentage.excellent {
+            color: #ffffff;
+            background-color: #28a745; /* Green for 70%+ */
+        }
+        
+        .win-percentage.good {
+            color: #000000;
+            background-color: #ffc107; /* Yellow for 50-69.9% */
+        }
+        
+        .win-percentage.poor {
+            color: #ffffff;
+            background-color: #dc3545; /* Red for below 50% */
+        }
+        
+        .no-games {
+            color: #dc3545;
+        }
+        
+        @media (max-width: 768px) {
+            .leagues-table {
+                flex-direction: column;
+            }
+            
+            .league-column {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .league-column:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Dark Mode Toggle -->
+    <div class="dark-mode-toggle">
+        <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle dark/light mode">
+        </button>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>Outcast Ranking</h1>
+        </header>
+
+        <!-- Search Form -->
+        <div class="manager-search-form">
+            <!-- Search Tabs -->
+            <div class="search-tabs">
+                <button class="search-tab active" onclick="switchTab('single')">Single Manager</button>
+                <button class="search-tab" onclick="switchTab('multi')">Compare Managers</button>
+            </div>
+            
+            <!-- Single Manager Search -->
+            <div id="single-search" class="search-content active">
+                <form method="POST" action="{{ url_for('manager.manager_search') }}">
+                    <input type="hidden" name="search_type" value="single">
+                    <div class="form-group">
+                        <label for="username">Manager Username:</label>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               value="{{ request.form.get('username', '') if request.form.get('search_type') == 'single' }}" 
+                               placeholder="Enter Sleeper username"
+                               required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="season">Season:</label>
+                        <select id="season" name="season">
+                            <option value="2025" {% if season == "2025" %}selected{% endif %}>2025</option>
+                            <option value="2024" {% if season == "2024" %}selected{% endif %}>2024</option>
+                            <option value="2023" {% if season == "2023" %}selected{% endif %}>2023</option>
+                            <option value="2022" {% if season == "2022" %}selected{% endif %}>2022</option>
+                            <option value="2021" {% if season == "2021" %}selected{% endif %}>2021</option>
+                            <option value="2020" {% if season == "2020" %}selected{% endif %}>2020</option>
+                            <option value="2019" {% if season == "2019" %}selected{% endif %}>2019</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Search Manager</button>
+                </form>
+            </div>
+            
+            <!-- Multi-Manager Search -->
+            <div id="multi-search" class="search-content">
+                
+                <form method="POST" action="{{ url_for('manager.compare_managers') }}">
+                    <input type="hidden" name="search_type" value="multi">
+                    <div class="form-group">
+                        <label for="manager_list">Rank Managers</label>
+                        <textarea id="manager_list" 
+                                  name="manager_list" 
+                                  rows="6" 
+                                  placeholder="Enter up to 100 usernames separated by commas or space"
+                                  style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace;"
+                                  required>{{ request.form.get('manager_list', '') if request.form.get('search_type') == 'multi' }}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="multi_season">Season:</label>
+                        <select id="multi_season" name="season">
+                            <option value="2025" {% if season == "2025" %}selected{% endif %}>2025</option>
+                            <option value="2024" {% if season == "2024" %}selected{% endif %}>2024</option>
+                            <option value="2023" {% if season == "2023" %}selected{% endif %}>2023</option>
+                            <option value="2022" {% if season == "2022" %}selected{% endif %}>2022</option>
+                            <option value="2021" {% if season == "2021" %}selected{% endif %}>2021</option>
+                            <option value="2020" {% if season == "2020" %}selected{% endif %}>2020</option>
+                            <option value="2019" {% if season == "2019" %}selected{% endif %}>2019</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Compare Managers</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Manager Results -->
+        {% if manager_data %}
+            <!-- Manager Summary -->
+            <div class="manager-summary">
+                <h2>{{ manager_data.display_name }}</h2>
+                <p>{{ manager_data.season }} Season Overview</p>
+                
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ manager_data.total_leagues }}</div>
+                        <div class="stat-label">Total Leagues</div>
+                    </div>
+                    {% if manager_data.summary %}
+                    <div class="stat-item">
+                        <div class="stat-value">{{ manager_data.summary.active_leagues }}</div>
+                        <div class="stat-label">Active Leagues</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ manager_data.summary.total_wins }}-{{ manager_data.summary.total_losses }}</div>
+                        <div class="stat-label">Total Record</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(manager_data.summary.overall_win_percentage * 100) }}%</div>
+                        <div class="stat-label">Overall Win %</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Rival Analysis within Manager Summary -->
+                {% if manager_data.summary %}
+                <div class="rival-analysis">
+                    <h3>Head-to-Head Analysis</h3>
+                    <div class="rival-containers">
+                        <div class="rival-container favorite-opponent" data-rival-type="favorite">
+                            <div class="rival-header">
+                                <span class="rival-icon">🎯</span>
+                                <h4>Favorite Opponent</h4>
+                            </div>
+                            <div class="rival-content">
+                                {% if manager_data.most_wins_against %}
+                                    <div class="rival-name">{{ manager_data.most_wins_against.opponent_name }}</div>
+                                    <div class="rival-record">
+                                        <span class="wins">{{ manager_data.most_wins_against.wins }}W</span>
+                                        -
+                                        <span class="losses">{{ manager_data.most_wins_against.losses }}L</span>
+                                    </div>
+                                    <div class="rival-percentage">({{ "%.1f"|format(manager_data.most_wins_against.win_percentage * 100) }}% vs them)</div>
+                                {% else %}
+                                    <div class="rival-name">Analysis Pending</div>
+                                    <div class="rival-record" style="display: none;">
+                                        <span class="wins">0W</span>
+                                        -
+                                        <span class="losses">0L</span>
+                                    </div>
+                                    <div class="rival-percentage" style="display: none;">(0% vs them)</div>
+                                    <div class="no-data">Head-to-head data will be calculated across all leagues to find your most dominated opponent</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="rival-container biggest-rival" data-rival-type="rival">
+                            <div class="rival-header">
+                                <span class="rival-icon">💀</span>
+                                <h4>Biggest Rival</h4>
+                            </div>
+                            <div class="rival-content">
+                                {% if manager_data.most_losses_to %}
+                                    <div class="rival-name">{{ manager_data.most_losses_to.opponent_name }}</div>
+                                    <div class="rival-record">
+                                        <span class="wins">{{ manager_data.most_losses_to.wins }}W</span>
+                                        -
+                                        <span class="losses">{{ manager_data.most_losses_to.losses }}L</span>
+                                    </div>
+                                    <div class="rival-percentage">({{ "%.1f"|format(manager_data.most_losses_to.win_percentage * 100) }}% vs them)</div>
+                                {% else %}
+                                    <div class="rival-name">Analysis Pending</div>
+                                    <div class="rival-record" style="display: none;">
+                                        <span class="wins">0W</span>
+                                        -
+                                        <span class="losses">0L</span>
+                                    </div>
+                                    <div class="rival-percentage" style="display: none;">(0% vs them)</div>
+                                    <div class="no-data">Head-to-head data will be calculated across all leagues to find your biggest nemesis</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Leagues Tables -->
+            {% for table in manager_data.tables %}
+                <div class="leagues-container">
+                    <div class="table-header">
+                        Table {{ table.table_number }} - Leagues {{ ((table.table_number - 1) * 50) + 1 }} to {{ ((table.table_number - 1) * 50) + table.league_count }}
+                    </div>
+                    
+                    <div class="leagues-table">
+                        {% for column in table.columns %}
+                            <div class="league-column">
+                                {% for league in column %}
+                                    <div class="league-item" onclick="viewLeague('{{ league.league_id }}', '{{ manager_data.display_name }}', '{{ season }}')">
+                                        <div class="league-name">{{ league.league_name }}</div>
+                                        <div class="league-record">
+                                            {% if league.total_games > 0 %}
+                                                {{ league.user_wins }}W-{{ league.user_losses }}L
+                                                {% set win_pct = league.win_percentage * 100 %}
+                                                {% if win_pct >= 70 %}
+                                                    <span class="win-percentage excellent">({{ "%.1f"|format(win_pct) }}%)</span>
+                                                {% elif win_pct >= 50 %}
+                                                    <span class="win-percentage good">({{ "%.1f"|format(win_pct) }}%)</span>
+                                                {% else %}
+                                                    <span class="win-percentage poor">({{ "%.1f"|format(win_pct) }}%)</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="no-games">No games played</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="league-team">{{ league.user_team_name }}</div>
+                                        <div class="league-record">{{ league.total_teams }} teams</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <script>
+        function switchTab(tabType) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.search-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.search-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            event.target.classList.add('active');
+            document.getElementById(tabType + '-search').classList.add('active');
+        }
+        
+        function viewLeague(leagueId, managerName, season) {
+            // Navigate to league leaderboard
+            window.location.href = `/league/${leagueId}?manager=${encodeURIComponent(managerName)}&season=${season}`;
+        }
+        
+        // Add loading animation when forms are submitted
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                const button = this.querySelector('button[type="submit"]');
+                const originalText = button.textContent;
+                button.textContent = originalText.includes('Compare') ? 'Comparing...' : 'Searching...';
+                button.disabled = true;
+            });
+        });
+        
+        // Animated "Analysis Pending" functionality with stop mechanism
+        let animationTimeoutId = null;
+        let isAnimationRunning = false;
+        
+        function startRivalryAnimation() {
+            const favoriteContainer = document.querySelector('[data-rival-type="favorite"]');
+            const rivalContainer = document.querySelector('[data-rival-type="rival"]');
+            
+            if (!favoriteContainer && !rivalContainer) return;
+            
+            const text = "Analysis Pending";
+            let currentIndex = 0;
+            let isReversing = false;
+            isAnimationRunning = true;
+            
+            const animateText = () => {
+                // Stop animation if it's been stopped externally
+                if (!isAnimationRunning) return;
+                
+                const currentText = isReversing 
+                    ? text.substring(0, text.length - currentIndex) 
+                    : text.substring(0, currentIndex + 1);
+                    
+                // Update both containers
+                if (favoriteContainer) {
+                    const nameElement = favoriteContainer.querySelector('.rival-name');
+                    if (nameElement) nameElement.textContent = currentText;
+                }
+                if (rivalContainer) {
+                    const nameElement = rivalContainer.querySelector('.rival-name');
+                    if (nameElement) nameElement.textContent = currentText;
+                }
+                
+                if (!isReversing) {
+                    currentIndex++;
+                    if (currentIndex >= text.length) {
+                        isReversing = true;
+                        animationTimeoutId = setTimeout(animateText, 1000); // Pause at full text
+                        return;
+                    }
+                } else {
+                    currentIndex++;
+                    if (currentIndex >= text.length) {
+                        isReversing = false;
+                        currentIndex = 0;
+                        animationTimeoutId = setTimeout(animateText, 500); // Pause at empty
+                        return;
+                    }
+                }
+                
+                animationTimeoutId = setTimeout(animateText, 150); // Letter animation speed (slowed down)
+            };
+            
+            return animateText;
+        }
+        
+        function stopRivalryAnimation() {
+            console.log('🛑 Stopping rivalry animation...');
+            isAnimationRunning = false;
+            if (animationTimeoutId) {
+                clearTimeout(animationTimeoutId);
+                animationTimeoutId = null;
+            }
+        }
+        
+        // Async rivalry calculation
+        function calculateRivalryAsync(managerData, season) {
+            console.log('🚀 Starting calculateRivalryAsync...');
+            console.log('Manager data:', managerData);
+            console.log('Season:', season);
+            
+            const animateFunction = startRivalryAnimation();
+            if (animateFunction) animateFunction();
+            
+            fetch('/calculate_rivalry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    manager_data: managerData,
+                    season: season
+                })
+            })
+            .then(response => {
+                console.log('📡 Received response:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📊 Response data:', data);
+                if (data.success) {
+                    console.log('✅ Success! Updating display...');
+                    console.log('Most wins against:', data.most_wins_against);
+                    console.log('Most losses to:', data.most_losses_to);
+                    updateRivalryDisplay(data.most_wins_against, data.most_losses_to);
+                    console.log(`🎯 Rivalry calculation completed in ${data.duration?.toFixed(2)}s`);
+                } else {
+                    console.error('❌ Rivalry calculation failed:', data.error);
+                    showRivalryError(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('💥 Error in rivalry calculation:', error);
+                showRivalryError('Network error occurred');
+            });
+        }
+        
+        // Update rivalry display with real data
+        function updateRivalryDisplay(mostWinsAgainst, mostLossesTo) {
+            console.log('🔄 Updating rivalry display...');
+            console.log('Most wins against data:', mostWinsAgainst);
+            console.log('Most losses to data:', mostLossesTo);
+            
+            // STOP THE ANIMATION FIRST
+            stopRivalryAnimation();
+            
+            // Update Favorite Opponent
+            const favoriteContainer = document.querySelector('[data-rival-type="favorite"]');
+            console.log('👑 Favorite container found:', !!favoriteContainer);
+            
+            if (favoriteContainer && mostWinsAgainst) {
+                console.log('✅ Updating favorite container with:', mostWinsAgainst.opponent_name);
+                
+                // Find ALL rival-name elements and target the visible one
+                const nameElements = favoriteContainer.querySelectorAll('.rival-name');
+                console.log('📝 Found', nameElements.length, 'name elements');
+                
+                // Find the visible one (the "Analysis Pending" element)
+                let nameElement = null;
+                nameElements.forEach((el, index) => {
+                    const isVisible = getComputedStyle(el).display !== 'none';
+                    console.log(`Element ${index}: visible=${isVisible}, text="${el.textContent}"`);
+                    if (isVisible && el.textContent.includes('Analysis')) {
+                        nameElement = el;
+                        console.log('🎯 Found target name element:', index);
+                    }
+                });
+                
+                // Fallback to any name element
+                if (!nameElement && nameElements.length > 0) {
+                    nameElement = nameElements[nameElements.length - 1]; // Take the last one (likely the pending one)
+                    console.log('🔄 Using fallback name element');
+                }
+                
+                const recordElement = favoriteContainer.querySelector('.rival-record');
+                const percentageElement = favoriteContainer.querySelector('.rival-percentage');
+                const noDataElement = favoriteContainer.querySelector('.no-data');
+                
+                console.log('Elements found:', {
+                    name: !!nameElement,
+                    record: !!recordElement,
+                    percentage: !!percentageElement,
+                    noData: !!noDataElement
+                });
+                
+                if (nameElement) {
+                    nameElement.textContent = mostWinsAgainst.opponent_name;
+                    nameElement.style.display = 'block'; // Ensure it's visible
+                    console.log('📝 Set name to:', mostWinsAgainst.opponent_name);
+                }
+                if (recordElement) {
+                    recordElement.innerHTML = `<span class="wins">${mostWinsAgainst.wins}W</span> - <span class="losses">${mostWinsAgainst.losses}L</span>`;
+                    recordElement.style.display = 'block';
+                    console.log('📊 Set record to:', `${mostWinsAgainst.wins}W-${mostWinsAgainst.losses}L`);
+                }
+                if (percentageElement) {
+                    percentageElement.textContent = `(${(mostWinsAgainst.win_percentage * 100).toFixed(1)}% vs them)`;
+                    percentageElement.style.display = 'block';
+                    console.log('📈 Set percentage to:', `${(mostWinsAgainst.win_percentage * 100).toFixed(1)}%`);
+                }
+                if (noDataElement) {
+                    noDataElement.style.display = 'none';
+                    console.log('🙈 Hid no-data element');
+                }
+            }
+            
+            // Update Biggest Rival
+            const rivalContainer = document.querySelector('[data-rival-type="rival"]');
+            console.log('💀 Rival container found:', !!rivalContainer);
+            
+            if (rivalContainer && mostLossesTo) {
+                console.log('✅ Updating rival container with:', mostLossesTo.opponent_name);
+                
+                // Find ALL rival-name elements and target the visible one
+                const nameElements = rivalContainer.querySelectorAll('.rival-name');
+                console.log('📝 Found', nameElements.length, 'rival name elements');
+                
+                // Find the visible one (the "Analysis Pending" element)
+                let nameElement = null;
+                nameElements.forEach((el, index) => {
+                    const isVisible = getComputedStyle(el).display !== 'none';
+                    console.log(`Rival element ${index}: visible=${isVisible}, text="${el.textContent}"`);
+                    if (isVisible && el.textContent.includes('Analysis')) {
+                        nameElement = el;
+                        console.log('🎯 Found target rival name element:', index);
+                    }
+                });
+                
+                // Fallback to any name element
+                if (!nameElement && nameElements.length > 0) {
+                    nameElement = nameElements[nameElements.length - 1]; // Take the last one (likely the pending one)
+                    console.log('🔄 Using fallback rival name element');
+                }
+                
+                const recordElement = rivalContainer.querySelector('.rival-record');
+                const percentageElement = rivalContainer.querySelector('.rival-percentage');
+                const noDataElement = rivalContainer.querySelector('.no-data');
+                
+                console.log('Rival elements found:', {
+                    name: !!nameElement,
+                    record: !!recordElement,
+                    percentage: !!percentageElement,
+                    noData: !!noDataElement
+                });
+                
+                if (nameElement) {
+                    nameElement.textContent = mostLossesTo.opponent_name;
+                    nameElement.style.display = 'block'; // Ensure it's visible
+                    console.log('📝 Set rival name to:', mostLossesTo.opponent_name);
+                }
+                if (recordElement) {
+                    recordElement.innerHTML = `<span class="wins">${mostLossesTo.wins}W</span> - <span class="losses">${mostLossesTo.losses}L</span>`;
+                    recordElement.style.display = 'block';
+                    console.log('📊 Set rival record to:', `${mostLossesTo.wins}W-${mostLossesTo.losses}L`);
+                }
+                if (percentageElement) {
+                    percentageElement.textContent = `(${(mostLossesTo.win_percentage * 100).toFixed(1)}% vs them)`;
+                    percentageElement.style.display = 'block';
+                    console.log('📈 Set rival percentage to:', `${(mostLossesTo.win_percentage * 100).toFixed(1)}%`);
+                }
+                if (noDataElement) {
+                    noDataElement.style.display = 'none';
+                    console.log('🙈 Hid rival no-data element');
+                }
+            }
+            
+            console.log('✅ Rivalry display update completed');
+        }
+        
+        // Show error message
+        function showRivalryError(errorMessage) {
+            const containers = document.querySelectorAll('[data-rival-type]');
+            containers.forEach(container => {
+                const nameElement = container.querySelector('.rival-name');
+                if (nameElement) {
+                    nameElement.textContent = 'Analysis Failed';
+                    nameElement.style.color = '#ff6b6b';
+                }
+            });
+        }
+        
+        // Auto-start rivalry calculation if manager data exists
+        window.addEventListener('load', function() {
+            console.log('Page loaded, checking for rivalry calculation...');
+            
+            // Check if we have manager data and rivalry is pending
+            {% if manager_data and manager_data.rivalry_pending %}
+            console.log('Manager data found with pending rivalry');
+            
+            const managerData = {{ manager_data | tojson }};
+            const season = '{{ season or "2025" }}';
+            
+            console.log('Manager data:', managerData);
+            console.log('Season:', season);
+            
+            // Verify containers exist
+            const favoriteContainer = document.querySelector('[data-rival-type="favorite"]');
+            const rivalContainer = document.querySelector('[data-rival-type="rival"]');
+            
+            console.log('Favorite container found:', !!favoriteContainer);
+            console.log('Rival container found:', !!rivalContainer);
+            
+            if (favoriteContainer || rivalContainer) {
+                setTimeout(() => {
+                    console.log('Starting rivalry calculation...');
+                    calculateRivalryAsync(managerData, season);
+                }, 500); // Small delay to let page settle
+            } else {
+                console.error('Rivalry containers not found!');
+            }
+            {% else %}
+            console.log('No manager data or rivalry not pending');
+            {% endif %}
+        });
+        
+        // Dark mode functionality loaded from shared script
+    </script>
+</body>
+</html>

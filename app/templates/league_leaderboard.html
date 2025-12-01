@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Leaderboard - OutcastRanking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .league-header {
+            background: #2c5aa0;
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .league-summary {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .summary-item {
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        
+        .back-button:hover {
+            background: #5a6268;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .leaderboard-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .leaderboard-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .leaderboard-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .leaderboard-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .leaderboard-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .rank-cell {
+            text-align: center;
+            font-weight: bold;
+            width: 60px;
+        }
+        
+        .rank-1 { color: #ffd700; }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+        
+        .team-name {
+            font-weight: bold;
+            color: #2c5aa0;
+        }
+        
+        .win-percentage {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .no-games {
+            color: #dc3545;
+            font-style: italic;
+        }
+        
+        .points-cell {
+            text-align: right;
+            font-family: monospace;
+        }
+        
+        .games-cell {
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .leaderboard-table {
+                font-size: 14px;
+            }
+            
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 8px;
+            }
+            
+            .league-summary {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            /* Hide less important columns on mobile */
+            .points-column {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back Button -->
+        <a href="{{ url_for('manager.manager_search') }}" class="back-button">← Back to Manager Search</a>
+        
+        <!-- League Header -->
+        <div class="league-header">
+            <h1>League Leaderboard</h1>
+            <p>League ID: {{ league_id }} | {{ season }} Season</p>
+            {% if manager_name %}
+                <p>Searched from: {{ manager_name }}</p>
+            {% endif %}
+            
+            {% if leaderboard and leaderboard.summary %}
+                <div class="league-summary">
+                    <div class="summary-item">
+                        <div class="summary-value">{{ leaderboard.summary.total_managers }}</div>
+                        <div class="summary-label">Total Teams</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">{{ leaderboard.summary.active_managers }}</div>
+                        <div class="summary-label">Active Teams</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">{{ leaderboard.summary.average_games_played }}</div>
+                        <div class="summary-label">Avg Games Played</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Leaderboard Table -->
+        {% if leaderboard and leaderboard.managers %}
+            <div class="leaderboard-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="rank-cell">Rank</th>
+                            <th>Team Name</th>
+                            <th class="games-cell">Wins</th>
+                            <th class="games-cell">Losses</th>
+                            <th class="games-cell">Win %</th>
+                            <th class="games-cell">Games</th>
+                            <th class="points-column">Points For</th>
+                            <th class="points-column">Points Against</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for manager in leaderboard.managers %}
+                            <tr>
+                                <td class="rank-cell rank-{{ manager.rank if manager.rank <= 3 else 'other' }}">
+                                    {{ manager.rank }}
+                                </td>
+                                <td class="team-name">{{ manager.team_name }}</td>
+                                <td class="games-cell">{{ manager.wins }}</td>
+                                <td class="games-cell">{{ manager.losses }}</td>
+                                <td class="games-cell">
+                                    {% if manager.total_games > 0 %}
+                                        <span class="win-percentage">{{ "%.1f"|format(manager.win_percentage * 100) }}%</span>
+                                    {% else %}
+                                        <span class="no-games">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="games-cell">
+                                    {{ manager.total_games }}
+                                    {% if manager.ties > 0 %}
+                                        <small>({{ manager.ties }}T)</small>
+                                    {% endif %}
+                                </td>
+                                <td class="points-column points-cell">
+                                    {% if manager.points_for > 0 %}
+                                        {{ "%.1f"|format(manager.points_for) }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
+                                </td>
+                                <td class="points-column points-cell">
+                                    {% if manager.points_against > 0 %}
+                                        {{ "%.1f"|format(manager.points_against) }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                <h3>No Data Available</h3>
+                <p>Unable to load leaderboard data for this league. This could be because:</p>
+                <ul>
+                    <li>The league doesn't exist or is private</li>
+                    <li>No teams have played any games yet</li>
+                    <li>There was an error connecting to the Sleeper API</li>
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- Additional Info -->
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 14px; color: #666;">
+            <h4>How Rankings Work:</h4>
+            <ul>
+                <li><strong>Win Percentage:</strong> Calculated as Wins ÷ (Wins + Losses)</li>
+                <li><strong>Tiebreaker:</strong> Total Points For (if available)</li>
+                <li><strong>Active Teams:</strong> Teams that have played at least one game</li>
+                <li>Ties are counted in total games but not in win percentage calculation</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

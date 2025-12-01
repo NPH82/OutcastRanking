@@ -1,0 +1,6 @@
+# Configuration settings
+import os
+
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+    # Add other configuration variables as needed

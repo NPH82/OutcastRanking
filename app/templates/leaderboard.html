@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outcast Fantasy Rankings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Outcast Fantasy Rankings</h1>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Input Form -->
+        <div class="form-section">
+            <h2>Enter Sleeper Usernames</h2>
+            <form method="POST" class="ranking-form">
+                <div class="form-group">
+                    <label for="usernames">Usernames (comma-separated):</label>
+                    <textarea id="usernames" name="usernames" placeholder="username1, username2, username3..." required>{{ usernames or '' }}</textarea>
+                    <small>Enter Sleeper usernames separated by commas</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="season">Season:</label>
+                    <select id="season" name="season">
+                        <option value="2025" {{ 'selected' if season == '2025' else '' }}>2025 (Current Season)</option>
+                        <option value="2024" {{ 'selected' if season == '2024' else '' }}>2024</option>
+                        <option value="2023" {{ 'selected' if season == '2023' else '' }}>2023</option>
+                        <option value="2022" {{ 'selected' if season == '2022' else '' }}>2022</option>
+                        <option value="2021" {{ 'selected' if season == '2021' else '' }}>2021</option>
+                        <option value="2020" {{ 'selected' if season == '2020' else '' }}>2020</option>
+                        <option value="2019" {{ 'selected' if season == '2019' else '' }}>2019</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="submitBtn">Generate Rankings</button>
+                <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Fetching data from Sleeper API... This may take 30-60 seconds for large requests.</p>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Results Table -->
+        {% if managers %}
+        <div class="results-section">
+            <div class="results-header">
+                <h2>Top 30 Fantasy Managers ({{ season }} Season)</h2>
+                <a href="{{ url_for('main.refresh') }}" class="btn btn-secondary">Refresh Data</a>
+            </div>
+            
+            <div class="table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Manager</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Win %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in managers %}
+                        <tr class="{{ 'top-10' if loop.index <= 10 else '' }}">
+                            <td class="rank">{{ loop.index }}</td>
+                            <td class="manager">{{ m.display_name }}</td>
+                            <td class="wins">{{ m.wins }}</td>
+                            <td class="losses">{{ m.losses }}</td>
+                            <td class="win-pct">{{ "%.1f"|format(m.win_percentage * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-results">
+            <p>Enter Sleeper usernames above to generate fantasy football rankings.</p>
+        </div>
+        {% endif %}
+        
+        <footer>
+            <p>Data sourced from Sleeper API • Rankings updated automatically</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.ranking-form');
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            form.addEventListener('submit', function(e) {
+                // Check if usernames field has content before submitting
+                const usernamesField = document.getElementById('usernames');
+                const usernamesValue = usernamesField.value.trim();
+                
+                console.log('Form submitting with usernames:', usernamesValue);
+                
+                if (!usernamesValue) {
+                    e.preventDefault();
+                    alert('Please enter at least one username before submitting!');
+                    return;
+                }
+                
+                // Show loading indicator
+                submitBtn.style.display = 'none';
+                loadingIndicator.style.display = 'block';
+                
+                // Disable form inputs (but not until after we've read the values)
+                setTimeout(() => {
+                    const inputs = form.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => input.disabled = true);
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

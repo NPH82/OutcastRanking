@@ -270,7 +270,7 @@ def api_manager_details(username):
 @manager_bp.route('/calculate_rivalry', methods=['POST'])
 def calculate_rivalry():
     """
-    Async endpoint for calculating manager rivalries.
+    Async endpoint for calculating manager rivalries with streaming progress updates.
     Called via AJAX after the initial manager search loads.
     """
     import threading
@@ -289,12 +289,12 @@ def calculate_rivalry():
         if not manager_data:
             return jsonify({"success": False, "error": "Manager data required"}), 400
         
-        print(f"🚀 Starting ASYNC rivalry calculation for {manager_data.get('display_name', 'Unknown')} at {datetime.now().strftime('%H:%M:%S')}")
+        print(f"🚀 Starting OPTIMIZED rivalry calculation for {manager_data.get('display_name', 'Unknown')} at {datetime.now().strftime('%H:%M:%S')}")
         
         rivalry_start_time = time.time()
         
         try:
-            print(f"🔥 Calculating rivalries for {manager_data.get('display_name', 'Unknown')} (using optimized high-traffic techniques)...")
+            print(f"🔥 Calculating rivalries with early termination optimization...")
             print(f"Manager has {manager_data.get('total_leagues', 0)} total leagues")
             
             rivalries = calculate_manager_rivalries_from_data(manager_data, season)
@@ -304,11 +304,12 @@ def calculate_rivalry():
             # Extract and display performance metrics
             performance = rivalries.get("performance", {})
             
-            print(f"🎯 ASYNC RIVALRY ANALYSIS COMPLETE:")
+            print(f"🎯 OPTIMIZED RIVALRY ANALYSIS COMPLETE:")
             print(f"  ⏱️  Total Duration: {rivalry_duration:.2f}s")
             print(f"  💾 Cache Performance: {performance.get('cache_hits', 0)} hits, {performance.get('cache_misses', 0)} misses")
             print(f"  🌐 API Efficiency: {performance.get('api_calls_made', 0)} calls made, {performance.get('api_calls_saved', 0)} calls saved")
             print(f"  📊 League Processing: {performance.get('leagues_processed', 0)} processed, {performance.get('leagues_skipped', 0)} skipped")
+            print(f"  ⚡ Early termination: {performance.get('early_termination', False)}")
             
             # Calculate performance metrics
             total_api_operations = performance.get('api_calls_made', 0) + performance.get('api_calls_saved', 0)

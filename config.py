@@ -8,7 +8,12 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
     
     # Database
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///outcast_ranking.db')
+    # PostgreSQL support: Render uses 'postgresql://' but SQLAlchemy 1.4+ requires 'postgresql://'
+    # Older postgres:// URLs need to be converted to postgresql://
+    database_url = os.environ.get('DATABASE_URL', 'sqlite:///outcast_ranking.db')
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Security Headers

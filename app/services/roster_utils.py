@@ -211,7 +211,8 @@ def calculate_manager_rivalries_from_data(manager_data, season="2025"):
         'api_calls_made': 0,
         'api_calls_saved': 0,
         'leagues_processed': 0,
-        'leagues_skipped': 0
+        'leagues_skipped': 0,
+        'early_termination': False
     }
     
     if not manager_data or not manager_data.get("user_id"):
@@ -283,16 +284,45 @@ def calculate_manager_rivalries_from_data(manager_data, season="2025"):
         for league_opponents in batch_results:
             for opponent_id, record in league_opponents.items():
                 if opponent_id not in opponent_records:
-                    opponent_records[opponent_id] = {'wins': 0, 'losses': 0, 'name': record.get('name', f'User_{opponent_id}')}
+                    opponent_records[opponent_id] = {'wins': 0, 'losses': 0, 'name': record.get('name', f'User_{opponent_id}'), 'matchups': 0}
                 
                 opponent_records[opponent_id]['wins'] += record['wins']
                 opponent_records[opponent_id]['losses'] += record['losses']
+                opponent_records[opponent_id]['matchups'] = opponent_records[opponent_id]['wins'] + opponent_records[opponent_id]['losses']
         
         batch_duration = time.time() - batch_start
         print(f"  ✅ Batch completed in {batch_duration:.2f}s - Total opponents: {len(opponent_records)}")
         
-        # NO EARLY TERMINATION - Process ALL leagues for comprehensive rivalry analysis
-        # (Removed smart termination logic to ensure all leagues are analyzed)
+        # AGGRESSIVE EARLY TERMINATION - Stop as soon as clear leaders emerge
+        if i >= batch_size * 2:  # After just 12 leagues (2 batches) - FASTER termination
+            if len(opponent_records) >= 3:  # Lower threshold - just need a few opponents
+                # Find current leaders
+                sorted_by_wins = sorted(opponent_records.items(), key=lambda x: x[1]['wins'], reverse=True)
+                sorted_by_losses = sorted(opponent_records.items(), key=lambda x: x[1]['losses'], reverse=True)
+                
+                if len(sorted_by_wins) >= 2 and len(sorted_by_losses) >= 2:
+                    # Check win leader confidence
+                    top_win_matchups = sorted_by_wins[0][1]['matchups']
+                    win_gap = sorted_by_wins[0][1]['wins'] - sorted_by_wins[1][1]['wins']
+                    
+                    # Check loss leader confidence
+                    top_loss_matchups = sorted_by_losses[0][1]['matchups']
+                    loss_gap = sorted_by_losses[0][1]['losses'] - sorted_by_losses[1][1]['losses']
+                    
+                    # DEBUG: Show current leaders and gaps
+                    print(f"  🔍 Early term check @ {i + len(batch)} leagues:")
+                    print(f"     Win: {sorted_by_wins[0][1]['name']} ({sorted_by_wins[0][1]['wins']}W-{sorted_by_wins[0][1]['losses']}L, {top_win_matchups} matchups, gap:{win_gap})")
+                    print(f"     Loss: {sorted_by_losses[0][1]['name']} ({sorted_by_losses[0][1]['wins']}W-{sorted_by_losses[0][1]['losses']}L, {top_loss_matchups} matchups, gap:{loss_gap})")
+                    
+                    # ULTRA-AGGRESSIVE confidence: 7+ matchups, 2+ gap - triggers VERY early!
+                    if (top_win_matchups >= 7 and win_gap >= 2) and (top_loss_matchups >= 7 and loss_gap >= 2):
+                        performance_metrics['early_termination'] = True
+                        remaining_leagues = len(comprehensive_leagues) - (i + len(batch))
+                        print(f"  ✅ EARLY TERMINATION: Clear leaders found after {i + len(batch)} leagues!")
+                        print(f"  🎯 Win leader: {sorted_by_wins[0][1]['name']} ({sorted_by_wins[0][1]['wins']}W-{sorted_by_wins[0][1]['losses']}L, {top_win_matchups} matchups, gap: +{win_gap})")
+                        print(f"  💀 Loss leader: {sorted_by_losses[0][1]['name']} ({sorted_by_losses[0][1]['wins']}W-{sorted_by_losses[0][1]['losses']}L, {top_loss_matchups} matchups, gap: +{loss_gap})")
+                        print(f"  ⚡ Saved processing {remaining_leagues} leagues (~{(remaining_leagues/batch_size)*batch_duration:.1f}s)")
+                        break
         
         # Progress update for user feedback
         if (i // batch_size + 1) % 2 == 0:
@@ -310,6 +340,8 @@ def calculate_manager_rivalries_from_data(manager_data, season="2025"):
     print(f"  🌐 API calls made: {performance_metrics['api_calls_made']}, saved: {performance_metrics['api_calls_saved']}")
     print(f"  ⏱️  Processing time: {league_processing_duration:.2f}s")
     print(f"  🤝 Found records against {len(opponent_records)} unique opponents")
+    if performance_metrics.get('early_termination'):
+        print(f"  ⚡ Early termination: YES - Clear leaders identified")
 
     # OPTIMIZATION 5: Optimize response payload - only return essential data
     if not opponent_records:
@@ -405,9 +437,9 @@ def process_league_batch_optimized(league_batch, user_id, season, performance_me
             if league_id:
                 league_lookup[league_id] = league_data  # Store lookup mapping
                 
-                # Check cache first with longer TTL for comprehensive analysis
+                # Check cache first with EXTENDED TTL - rosters rarely change mid-season
                 cache_key = f"rosters_{league_id}"
-                cached_rosters = API_RESPONSE_CACHE.get(cache_key, ttl=1800)  # 30-minute TTL for comprehensive analysis
+                cached_rosters = API_RESPONSE_CACHE.get(cache_key, ttl=86400)  # 24-hour TTL (rosters stable)
                 
                 if cached_rosters:
                     performance_metrics['api_calls_saved'] += 1
@@ -496,25 +528,28 @@ def get_league_opponents_high_performance(league_id, user_roster_id, rosters, se
         # For current 2025 season, analyze ALL COMPLETED weeks (exclude current in-progress week)
         completed_weeks = current_week - 1  # Week 8 is in progress, so only weeks 1-7 are completed
         
-        # Always analyze ALL completed weeks for comprehensive rivalry data
-        start_week = 1
+        # Process ALL completed weeks for ACCURATE rivalry detection
         max_week = completed_weeks
-        print(f"    📅 ALL COMPLETED WEEKS: analyzing weeks {start_week}-{completed_weeks} (week {current_week} in progress)")
+        start_week = 1
+        
+        # All weeks - no sampling to ensure accuracy
+        week_range = list(range(start_week, max_week + 1))
+        print(f"    📅 COMPREHENSIVE: analyzing all {len(week_range)} completed weeks ({start_week}-{max_week}) for accuracy")
     else:
-        # For past seasons, use intelligent sampling
+        # For past seasons, analyze all regular season weeks
         max_week = min(current_week, 14)
         start_week = 1
-        print(f"    📅 Past season {season}: checking weeks 1-{max_week}")
+        
+        # All weeks for past seasons too
+        week_range = list(range(start_week, max_week + 1))
+        print(f"    📅 Past season {season}: analyzing all weeks {start_week}-{max_week}")
     
-    # Process only recent/relevant weeks for ultra-fast results
-    week_range = list(range(start_week, max_week + 1))
-    
-    print(f"    ⚡ ULTRA-FAST: {len(week_range)} weeks to process (optimized for speed)")
+    # Process all weeks for accurate rivalry detection
     
     # OPTIMIZATION: Batch process weeks and cache aggressively
     for week in week_range:
         cache_key = f"matchups_{league_id}_{week}"
-        matchups = API_RESPONSE_CACHE.get(cache_key, ttl=7200)  # 2-hour TTL for comprehensive analysis
+        matchups = API_RESPONSE_CACHE.get(cache_key, ttl=86400)  # 24-hour TTL (completed weeks never change)
         
         if not matchups:
             try:

@@ -11,3 +11,13 @@ services:
         generateValue: true
       - key: FLASK_ENV
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: outcast-ranking-db
+          property: connectionString
+
+databases:
+  - name: outcast-ranking-db
+    databaseName: outcast_ranking
+    user: outcast_user
+    plan: free

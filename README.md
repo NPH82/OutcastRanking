@@ -72,12 +72,17 @@ A Flask-based web application for ranking and analyzing fantasy football manager
    # python -c "import secrets; print(secrets.token_hex(32))"
    ```
 
-5. **Run the application**
+5. **Initialize the database** (optional - auto-created on first run)
+   ```bash
+   python init_db.py
+   ```
+
+6. **Run the application**
    ```bash
    python run.py
    ```
 
-6. **Access the application**
+7. **Access the application**
    Open your browser and navigate to `http://127.0.0.1:5001`
 
 ## Configuration

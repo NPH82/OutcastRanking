@@ -59,17 +59,14 @@ Set these in your hosting platform:
 
 ## Database Persistence
 
-⚠️ **Important**: Free tiers use ephemeral storage. Your SQLite database will reset on redeploys.
+✅ **PostgreSQL is now configured!** Your `render.yaml` includes automatic PostgreSQL setup.
 
-**Solutions**:
-1. **Render PostgreSQL** (free addon) - Recommended
-2. **Railway PostgreSQL** (included)
-3. **Supabase** (free PostgreSQL hosting)
+When you deploy to Render, it will:
+1. Create a free PostgreSQL database
+2. Automatically link it to your app
+3. Initialize the tables
 
-To switch to PostgreSQL, update `config.py`:
-```python
-SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///rankings.db')
-```
+See [POSTGRESQL_SETUP.md](POSTGRESQL_SETUP.md) for detailed instructions and local development setup.
 
 ---
 

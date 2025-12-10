@@ -205,14 +205,16 @@ def get_manager_league_details(username, season="2025"):
         for table in manager_data.get("tables", []):
             for column in table.get("columns", []):
                 for league in column:
+                    total_games = league.get('total_games', 0)
                     leagues_detail.append({
                         'league_id': league.get('league_id'),
                         'league_name': league.get('league_name'),
                         'wins': league.get('user_wins', 0),
                         'losses': league.get('user_losses', 0),
-                        'total_games': league.get('total_games', 0),
+                        'total_games': total_games,
                         'win_percentage': league.get('win_percentage', 0),
-                        'is_active': league.get('total_games', 0) > 0
+                        'status': 'active' if total_games > 0 else 'inactive',
+                        'is_active': total_games > 0
                     })
         
         return {

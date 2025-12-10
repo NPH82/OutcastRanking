@@ -2,6 +2,8 @@
 
 A Flask-based web application for ranking and analyzing fantasy football managers across multiple Sleeper leagues.
 
+🌐 **[Live Demo](https://outcast-ranking.onrender.com)** (Deploy your own below!)
+
 ## Features
 
 - **Manager Search**: Look up individual managers and view their performance across all leagues
@@ -10,6 +12,13 @@ A Flask-based web application for ranking and analyzing fantasy football manager
 - **Head-to-Head Analysis**: Discover your biggest rivals and favorite opponents
 - **Performance Statistics**: Track wins, losses, and win percentages across multiple seasons
 - **Dark Mode Support**: Toggle between light and dark themes
+- **WCAG AA Compliant**: Accessible design for all users
+
+## Quick Deploy
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
+**Other Options**: See [DEPLOYMENT.md](DEPLOYMENT.md) for Railway, Fly.io, and PythonAnywhere
 
 ## Security Features
 
